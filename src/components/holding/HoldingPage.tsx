@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { ArrowRight, Mail, Calendar, Users, Zap, Shield, Clock } from 'lucide-react';
 import { useState } from 'react';
