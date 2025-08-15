@@ -1,0 +1,71 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["iad1", "sfo1"],
+  "env": {
+    "NEXT_PUBLIC_VERCEL_URL": "@vercel-url",
+    "NEXT_PUBLIC_VERCEL_ENV": "@vercel-env",
+    "DATABASE_URL": "@neon-database-url",
+    "DIRECT_URL": "@neon-direct-url",
+    "NEXT_PUBLIC_SUPABASE_URL": "@supabase-url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase-anon-key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase-service-role-key",
+    "SHOPIFY_PARTNER_API_KEY": "@shopify-partner-api-key",
+    "SHOPIFY_PARTNER_API_SECRET": "@shopify-partner-api-secret"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_DEMO_MODE": "false",
+      "NODE_ENV": "production"
+    }
+  },
+  "preview": {
+    "env": {
+      "NEXT_PUBLIC_DEMO_MODE": "true",
+      "NODE_ENV": "development"
+    }
+  },
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/cleanup-temp-stores",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/sync-store-metrics",
+      "schedule": "*/15 * * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Authorization"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/healthz",
+      "destination": "/api/health"
+    }
+  ]
+}
