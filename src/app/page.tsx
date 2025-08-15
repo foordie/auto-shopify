@@ -1,8 +1,16 @@
-import Link from 'next/link'
-import { ArrowRight, CheckCircle, Clock, Users, Zap, BarChart3 } from 'lucide-react'
-import { DemoDataBadge, DemoContainer } from '@/components/ui/DemoDataBadge'
+import Link from 'next/link';
+import { ArrowRight, CheckCircle, Clock, Users, Zap, BarChart3 } from 'lucide-react';
+import { DemoDataBadge, DemoContainer } from '@/components/ui/DemoDataBadge';
+import { isProduction } from '@/lib/utils/environment';
+import HoldingPage from '@/components/holding/HoldingPage';
 
 export default function HomePage() {
+  // Show holding page in production environment
+  if (isProduction()) {
+    return <HoldingPage />;
+  }
+
+  // Show full application in staging and development
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white">
       {/* Navigation */}
@@ -11,9 +19,7 @@ export default function HomePage() {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <h1 className="text-xl font-bold text-primary-600">
-                  Shopify Automation Platform
-                </h1>
+                <h1 className="text-xl font-bold text-primary-600">Shopify Automation Platform</h1>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -45,7 +51,8 @@ export default function HomePage() {
                   <span className="block text-primary-600 xl:inline">Dream Online Store</span>
                 </h1>
                 <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                  Turn your business idea into a professional Shopify store in just 20 minutes. No technical skills needed - our AI handles everything from design to product setup.
+                  Turn your business idea into a professional Shopify store in just 20 minutes. No
+                  technical skills needed - our AI handles everything from design to product setup.
                 </p>
                 <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                   <div className="rounded-md shadow">
@@ -93,7 +100,8 @@ export default function HomePage() {
             </p>
             <div className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
               <p className="inline">
-                Our platform automates every aspect of Shopify store creation, from initial setup to your first sale.
+                Our platform automates every aspect of Shopify store creation, from initial setup to
+                your first sale.
               </p>
               <DemoDataBadge type="data" label="DEMO CLAIMS" className="ml-2" />
             </div>
@@ -111,7 +119,8 @@ export default function HomePage() {
                   </p>
                 </dt>
                 <dd className="mt-2 ml-16 text-base text-gray-500">
-                  Complete Shopify store setup with products, theme customization, and payment configuration in just 20 minutes.
+                  Complete Shopify store setup with products, theme customization, and payment
+                  configuration in just 20 minutes.
                 </dd>
               </div>
 
@@ -125,7 +134,8 @@ export default function HomePage() {
                   </p>
                 </dt>
                 <dd className="mt-2 ml-16 text-base text-gray-500">
-                  Built-in marketing tools, SEO optimization, and growth analytics to help your business succeed from day one.
+                  Built-in marketing tools, SEO optimization, and growth analytics to help your
+                  business succeed from day one.
                 </dd>
               </div>
 
@@ -139,7 +149,8 @@ export default function HomePage() {
                   </p>
                 </dt>
                 <dd className="mt-2 ml-16 text-base text-gray-500">
-                  AI-powered content generation and professional design templates ensure every store looks perfect.
+                  AI-powered content generation and professional design templates ensure every store
+                  looks perfect.
                 </dd>
               </div>
 
@@ -153,7 +164,8 @@ export default function HomePage() {
                   </p>
                 </dt>
                 <dd className="mt-2 ml-16 text-base text-gray-500">
-                  Track store creation progress, performance metrics, and client satisfaction with comprehensive analytics.
+                  Track store creation progress, performance metrics, and client satisfaction with
+                  comprehensive analytics.
                 </dd>
               </div>
             </div>
@@ -249,5 +261,5 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
