@@ -112,9 +112,9 @@ export async function GET(request: NextRequest) {
 
     // Add some calculated business metrics
     const businessMetrics = {
-      conversionRate: totalClients > 0 && totalStores > 0 ? ((totalStores || 0) / (totalClients || 1) * 100) : 0,
-      agencyUtilization: totalAgencies > 0 ? ((totalClients || 0) / (totalAgencies || 1)) : 0,
-      automationEfficiency: activeJobs > 0 ? (jobsCompletedToday || 0) / ((activeJobs || 0) + (jobsCompletedToday || 1)) * 100 : 100
+      conversionRate: (totalClients || 0) > 0 && (totalStores || 0) > 0 ? ((totalStores || 0) / (totalClients || 1) * 100) : 0,
+      agencyUtilization: (totalAgencies || 0) > 0 ? ((totalClients || 0) / (totalAgencies || 1)) : 0,
+      automationEfficiency: (activeJobs || 0) > 0 ? (jobsCompletedToday || 0) / ((activeJobs || 0) + (jobsCompletedToday || 1)) * 100 : 100
     }
 
     const response = {

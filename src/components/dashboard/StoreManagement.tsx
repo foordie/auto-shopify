@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/lib/auth/auth-context'
 import { Loader2, AlertCircle } from 'lucide-react'
 
 interface StoreManagementData {
