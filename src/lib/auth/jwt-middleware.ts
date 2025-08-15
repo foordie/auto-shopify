@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import jwt from 'jsonwebtoken'
+import jwt, { SignOptions } from 'jsonwebtoken'
 
 // Security: JWT secret (in production, use proper env vars)
 const JWT_SECRET = process.env.JWT_SECRET || 'demo-jwt-secret-change-in-production'
@@ -168,15 +168,17 @@ export function generateJWT(payload: {
   email: string
   role?: string
 }, expiresIn: string = '15m'): string {
-  return jwt.sign(
-    payload,
-    JWT_SECRET,
-    {
-      expiresIn,
-      issuer: 'shopify-automation-platform',
-      audience: 'shopify-automation-users'
-    }
-  )
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured')
+  }
+  
+  const options: any = {
+    expiresIn,
+    issuer: 'shopify-automation-platform',
+    audience: 'shopify-automation-users'
+  }
+  
+  return jwt.sign(payload, JWT_SECRET, options)
 }
 
 /**

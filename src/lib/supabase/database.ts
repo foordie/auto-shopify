@@ -381,7 +381,7 @@ export class DatabaseService {
           schema: 'public',
           table: 'automation_jobs'
         },
-        async (payload) => {
+        async (payload: any) => {
           // Only notify for jobs belonging to this agency
           if (payload.new?.store_config_id || payload.old?.store_config_id) {
             const configId = payload.new?.store_config_id || payload.old?.store_config_id

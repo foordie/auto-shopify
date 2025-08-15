@@ -15,7 +15,7 @@ interface UserProfile {
   email: string
   full_name: string
   agency_name: string
-  role: 'agency_owner' | 'agency_member' | 'client'
+  role: 'agency_owner' | 'agency_member' | 'client' | 'aspiring_entrepreneur' | 'first_time_builder' | 'small_business_owner' | 'side_hustle_starter' | 'creative_professional'
   created_at: string
   updated_at: string
 }

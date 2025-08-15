@@ -3,17 +3,34 @@ import { neon } from '@neondatabase/serverless'
 // Get database URL from environment
 const getDatabaseUrl = (): string => {
   const url = process.env.DATABASE_URL
+  if (!url && process.env.NODE_ENV !== 'production') {
+    console.warn('DATABASE_URL environment variable is not set, using fallback')
+    return 'postgresql://fallback@localhost/fallback' // Fallback for build time
+  }
   if (!url) {
     throw new Error('DATABASE_URL environment variable is not set')
   }
   return url
 }
 
-// Create Neon SQL client
-const sql = neon(getDatabaseUrl())
+// Create Neon SQL client - handle build time gracefully
+let sql: any
+try {
+  sql = neon(getDatabaseUrl())
+} catch (error) {
+  console.warn('Database connection not available during build:', error)
+  sql = null
+}
 
 // Database connection utility
 export class Database {
+  private static checkConnection() {
+    if (!sql) {
+      throw new Error('Database connection not available')
+    }
+    return sql
+  }
+
   // User operations
   static async createUser(userData: {
     email: string
@@ -24,6 +41,7 @@ export class Database {
     productCategory: string
     businessName?: string
   }) {
+    const sql = this.checkConnection()
     const result = await sql`
       INSERT INTO users (
         email, password_hash, full_name, role, 
@@ -40,6 +58,7 @@ export class Database {
   }
 
   static async getUserByEmail(email: string) {
+    const sql = this.checkConnection()
     const result = await sql`
       SELECT id, email, password_hash, full_name, role, business_stage,
              product_category, business_name, email_verified, created_at, updated_at
@@ -50,6 +69,7 @@ export class Database {
   }
 
   static async getUserById(userId: string) {
+    const sql = this.checkConnection()
     const result = await sql`
       SELECT id, email, full_name, role, business_stage,
              product_category, business_name, email_verified, created_at, updated_at
@@ -92,6 +112,7 @@ export class Database {
 
     if (setParts.length === 0) return null
 
+    const sql = this.checkConnection()
     const result = await sql`
       UPDATE users 
       SET ${sql.unsafe(setParts.join(', '))}, updated_at = NOW()
@@ -110,6 +131,7 @@ export class Database {
     theme?: string
     customDomain?: string
   }) {
+    const sql = this.checkConnection()
     const result = await sql`
       INSERT INTO stores (
         user_id, name, description, category, theme, custom_domain, 
@@ -146,6 +168,7 @@ export class Database {
   }
 
   static async getStore(storeId: string, userId: string) {
+    const sql = this.checkConnection()
     const result = await sql`
       SELECT id, name, description, category, status, domain, custom_domain,
              setup_complete, steps_completed, next_step, created_at, updated_at
@@ -178,6 +201,7 @@ export class Database {
 
     if (setParts.length === 0) return null
 
+    const sql = this.checkConnection()
     const result = await sql`
       UPDATE stores 
       SET ${sql.unsafe(setParts.join(', '))}, updated_at = NOW()
@@ -189,6 +213,7 @@ export class Database {
 
   // Store progress tracking
   static async createProgressStep(storeId: string, step: string) {
+    const sql = this.checkConnection()
     const result = await sql`
       INSERT INTO store_progress (store_id, step, status, started_at)
       VALUES (${storeId}, ${step}, 'in_progress', NOW())
@@ -198,6 +223,7 @@ export class Database {
   }
 
   static async completeProgressStep(progressId: string, success = true, errorMessage?: string) {
+    const sql = this.checkConnection()
     const result = await sql`
       UPDATE store_progress
       SET status = ${success ? 'completed' : 'failed'}, 
@@ -211,6 +237,7 @@ export class Database {
 
   // Refresh token operations
   static async storeRefreshToken(userId: string, tokenHash: string, expiresAt: Date, deviceInfo?: object) {
+    const sql = this.checkConnection()
     const result = await sql`
       INSERT INTO refresh_tokens (user_id, token_hash, expires_at, device_info)
       VALUES (${userId}, ${tokenHash}, ${expiresAt.toISOString()}, ${JSON.stringify(deviceInfo || {})})
@@ -220,6 +247,7 @@ export class Database {
   }
 
   static async getRefreshToken(tokenHash: string) {
+    const sql = this.checkConnection()
     const result = await sql`
       SELECT rt.id, rt.user_id, rt.expires_at, rt.revoked, rt.device_info,
              u.email, u.full_name, u.role
@@ -231,6 +259,7 @@ export class Database {
   }
 
   static async revokeRefreshToken(tokenHash: string) {
+    const sql = this.checkConnection()
     const result = await sql`
       UPDATE refresh_tokens
       SET revoked = true
@@ -244,6 +273,7 @@ export class Database {
   static async checkRateLimit(identifier: string, endpoint: string, windowMinutes = 15) {
     const windowStart = new Date(Date.now() - windowMinutes * 60 * 1000)
     
+    const sql = this.checkConnection()
     const result = await sql`
       SELECT request_count, window_start
       FROM rate_limits
@@ -279,6 +309,7 @@ export class Database {
 
   // Audit logging
   static async logAction(userId: string | null, action: string, resourceType?: string, resourceId?: string, metadata?: object, ipAddress?: string, userAgent?: string) {
+    const sql = this.checkConnection()
     await sql`
       INSERT INTO audit_logs (
         user_id, action, resource_type, resource_id, 
@@ -292,6 +323,7 @@ export class Database {
 
   // Metrics
   static async recordMetric(name: string, value: number, type = 'counter', tags?: object) {
+    const sql = this.checkConnection()
     await sql`
       INSERT INTO system_metrics (metric_name, metric_value, metric_type, tags)
       VALUES (${name}, ${value}, ${type}, ${JSON.stringify(tags || {})})
@@ -301,6 +333,7 @@ export class Database {
   static async getMetrics(metricName: string, hoursBack = 24) {
     const since = new Date(Date.now() - hoursBack * 60 * 60 * 1000)
     
+    const sql = this.checkConnection()
     const result = await sql`
       SELECT metric_value, tags, recorded_at
       FROM system_metrics
@@ -313,7 +346,8 @@ export class Database {
   // Health check
   static async healthCheck() {
     try {
-      const result = await sql`SELECT 1 as health`
+      const sql = this.checkConnection()
+    const result = await sql`SELECT 1 as health`
       return result[0].health === 1
     } catch (error) {
       console.error('Database health check failed:', error)

@@ -5,10 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth/auth-provider'
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import BusinessInfoForm from './BusinessInfoForm'
-// import StoreConfigForm from './StoreConfigForm'
-// import DesignPreferencesForm from './DesignPreferencesForm'
-// import FeaturesSelectionForm from './FeaturesSelectionForm'
-// import ReviewAndSubmitForm from './ReviewAndSubmitForm'
+import { DemoDataBadge } from '@/components/ui/DemoDataBadge'
 import ProgressTracker from './ProgressTracker'
 
 interface StoreData {
@@ -137,45 +134,131 @@ export default function StoreCreationWizard() {
         )
       case 2:
         return (
-          <StoreConfigForm
-            initialData={storeData.storeConfig}
-            onSubmit={(data) => {
-              handleStepData({ storeConfig: data })
-              nextStep()
-            }}
-            onBack={prevStep}
-          />
+          <div className="space-y-6">
+            <DemoDataBadge type="process" label="STORE CONFIG FORM - COMING SOON" />
+            <div className="bg-gray-50 rounded-lg p-8 text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Store Configuration</h3>
+              <p className="text-gray-600 mb-6">Configure your store settings, domain, and basic preferences</p>
+              <div className="flex justify-between">
+                <button
+                  onClick={prevStep}
+                  className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  Back
+                </button>
+                <button
+                  onClick={() => {
+                    handleStepData({ storeConfig: { storeName: 'Demo Store', currency: 'USD' } })
+                    nextStep()
+                  }}
+                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+                >
+                  Continue
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </button>
+              </div>
+            </div>
+          </div>
         )
       case 3:
         return (
-          <DesignPreferencesForm
-            initialData={storeData.designPreferences}
-            onSubmit={(data) => {
-              handleStepData({ designPreferences: data })
-              nextStep()
-            }}
-            onBack={prevStep}
-          />
+          <div className="space-y-6">
+            <DemoDataBadge type="process" label="DESIGN PREFERENCES - COMING SOON" />
+            <div className="bg-gray-50 rounded-lg p-8 text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Design Preferences</h3>
+              <p className="text-gray-600 mb-6">Choose your theme, colors, and branding preferences</p>
+              <div className="flex justify-between">
+                <button
+                  onClick={prevStep}
+                  className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  Back
+                </button>
+                <button
+                  onClick={() => {
+                    handleStepData({ designPreferences: { themePreference: 'modern', colorScheme: { primary: '#3B82F6', secondary: '#10B981', accent: '#F59E0B' } } })
+                    nextStep()
+                  }}
+                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+                >
+                  Continue
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </button>
+              </div>
+            </div>
+          </div>
         )
       case 4:
         return (
-          <FeaturesSelectionForm
-            initialData={storeData.features}
-            onSubmit={(data) => {
-              handleStepData({ features: data })
-              nextStep()
-            }}
-            onBack={prevStep}
-          />
+          <div className="space-y-6">
+            <DemoDataBadge type="process" label="FEATURES SELECTION - COMING SOON" />
+            <div className="bg-gray-50 rounded-lg p-8 text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Features Selection</h3>
+              <p className="text-gray-600 mb-6">Select payment methods, shipping options, and integrations</p>
+              <div className="flex justify-between">
+                <button
+                  onClick={prevStep}
+                  className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  Back
+                </button>
+                <button
+                  onClick={() => {
+                    handleStepData({ features: { paymentMethods: ['stripe', 'paypal'], shippingOptions: ['standard'], marketingFeatures: ['seo'], integrations: [] } })
+                    nextStep()
+                  }}
+                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+                >
+                  Continue
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </button>
+              </div>
+            </div>
+          </div>
         )
       case 5:
         return (
-          <ReviewAndSubmitForm
-            storeData={storeData}
-            onBack={prevStep}
-            onSubmit={handleFinalSubmit}
-            isSubmitting={isSubmitting}
-          />
+          <div className="space-y-6">
+            <DemoDataBadge type="process" label="REVIEW & SUBMIT - DEMO" />
+            <div className="bg-gray-50 rounded-lg p-8">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Review Your Store Configuration</h3>
+              <div className="space-y-4 mb-6">
+                <div className="bg-white p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Business Information</h4>
+                  <p className="text-sm text-gray-600">{storeData.businessInfo?.businessName || 'Not provided'}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Store Configuration</h4>
+                  <p className="text-sm text-gray-600">{storeData.storeConfig?.storeName || 'Demo Store'}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Design & Features</h4>
+                  <p className="text-sm text-gray-600">Theme: {storeData.designPreferences?.themePreference || 'Modern'}</p>
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <button
+                  onClick={prevStep}
+                  disabled={isSubmitting}
+                  className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  Back
+                </button>
+                <button
+                  onClick={handleFinalSubmit}
+                  disabled={isSubmitting}
+                  className="flex items-center px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Creating Store...' : 'Create Store'}
+                  {!isSubmitting && <Check className="w-4 h-4 ml-2" />}
+                </button>
+              </div>
+            </div>
+          </div>
         )
       default:
         return null

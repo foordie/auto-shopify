@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth/auth-provider-mock'
 import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react'
 
 export default function RegisterPage() {
+  const [mounted, setMounted] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -20,7 +21,23 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  
+  // Handle client-side mounting
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  // Use auth hook - will throw error during build but that's expected
   const { signUp, loading } = useAuth()
+
+  // Don't render until client-side mounted
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
