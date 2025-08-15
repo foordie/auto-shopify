@@ -1,48 +1,14 @@
 {
+  "framework": "nextjs",
   "buildCommand": "npm run build",
-  "outputDirectory": ".next",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "framework": "nextjs",
-  "regions": ["iad1", "sfo1"],
-  "env": {
-    "NEXT_PUBLIC_VERCEL_URL": "@vercel-url",
-    "NEXT_PUBLIC_VERCEL_ENV": "@vercel-env",
-    "DATABASE_URL": "@neon-database-url",
-    "DIRECT_URL": "@neon-direct-url",
-    "NEXT_PUBLIC_SUPABASE_URL": "@supabase-url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase-anon-key",
-    "SUPABASE_SERVICE_ROLE_KEY": "@supabase-service-role-key",
-    "SHOPIFY_PARTNER_API_KEY": "@shopify-partner-api-key",
-    "SHOPIFY_PARTNER_API_SECRET": "@shopify-partner-api-secret"
-  },
-  "build": {
-    "env": {
-      "NEXT_PUBLIC_DEMO_MODE": "false",
-      "NODE_ENV": "production"
-    }
-  },
-  "preview": {
-    "env": {
-      "NEXT_PUBLIC_DEMO_MODE": "true",
-      "NODE_ENV": "development"
-    }
-  },
+  "regions": ["iad1"],
   "functions": {
-    "app/api/**/*.ts": {
+    "src/app/api/**/*.ts": {
       "maxDuration": 30
     }
   },
-  "crons": [
-    {
-      "path": "/api/cron/cleanup-temp-stores",
-      "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron/sync-store-metrics",
-      "schedule": "*/15 * * * *"
-    }
-  ],
   "headers": [
     {
       "source": "/api/(.*)",
@@ -57,15 +23,25 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "X-Requested-With, Content-Type, Authorization"
+          "value": "Content-Type, Authorization"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/healthz",
-      "destination": "/api/health"
     }
   ]
 }

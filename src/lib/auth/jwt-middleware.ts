@@ -79,7 +79,8 @@ export function checkRateLimit(
   const endpointMap = rateLimitMaps.get(endpoint)!
   
   // Clean old entries
-  for (const [key, value] of endpointMap.entries()) {
+  const entries = Array.from(endpointMap.entries())
+  for (const [key, value] of entries) {
     if (value.resetTime < windowStart) {
       endpointMap.delete(key)
     }

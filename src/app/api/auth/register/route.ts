@@ -20,7 +20,8 @@ function getRateLimit(identifier: string): { allowed: boolean, remaining: number
   const windowStart = now - RATE_LIMIT_WINDOW
   
   // Clean old entries
-  for (const [key, value] of rateLimitMap.entries()) {
+  const entries = Array.from(rateLimitMap.entries())
+  for (const [key, value] of entries) {
     if (value.resetTime < windowStart) {
       rateLimitMap.delete(key)
     }

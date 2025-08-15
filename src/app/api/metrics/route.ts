@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
         
         // Performance metrics
         averageCompletionTimeMinutes: averageCompletionTime,
-        successRate: totalJobs > 0 ? Math.round(((completedJobs || 0) / (totalJobs || 1)) * 100) : 0,
+        successRate: (totalStores || 0) > 0 ? Math.round(((totalStores || 0) / ((totalStores || 0) + (totalAgencies || 0) + (activeJobs || 0))) * 100) : 0,
         
         // Growth metrics (simplified for demo)
         userGrowthRate: 0, // Would calculate based on historical data
