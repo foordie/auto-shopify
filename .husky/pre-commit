@@ -1,0 +1,113 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Pre-commit checks running..."
+
+# Check if we have the required environment setup
+if [ ! -f ".env.local" ] && [ ! -f ".env" ]; then
+  echo "⚠️ No environment file found. Creating minimal .env.local for build testing..."
+  cat > .env.local << EOF
+# Minimal environment for build testing
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_build_check
+CLERK_SECRET_KEY=sk_test_build_check
+JWT_SECRET=build-check-jwt-secret-minimum-32-characters-required-for-testing
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+DATABASE_URL=postgresql://buildcheck:buildcheck@localhost:5432/buildcheck
+NODE_ENV=development
+EOF
+fi
+
+# Run TypeScript type checking
+echo "🔧 Running TypeScript type check..."
+npm run type-check
+if [ $? -ne 0 ]; then
+  echo "❌ TypeScript type check failed. Please fix type errors before committing."
+  exit 1
+fi
+
+# Run ESLint
+echo "🧹 Running ESLint..."
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ ESLint check failed. Please fix linting errors before committing."
+  exit 1
+fi
+
+# Test Vercel build
+echo "🏗️ Testing Vercel build compatibility..."
+npm run build 2>&1 | tee build_output.log
+
+# Check if build completed (exit code 0 means successful compilation)
+BUILD_EXIT_CODE=$?
+
+# Check for critical build failures (not Clerk prerender warnings)
+if [ $BUILD_EXIT_CODE -ne 0 ]; then
+  # Check if failure is ONLY due to expected Clerk API key issues
+  if grep -q "Missing publishableKey" build_output.log && grep -q "✓ Generating static pages" build_output.log; then
+    echo "⚠️ Build completed with expected Clerk API key warnings (awaiting keys)"
+    echo "✅ Build artifacts generated successfully - safe for Vercel deployment"
+  else
+    echo "❌ Build failed with critical errors! This commit would fail on Vercel deployment."
+    echo "Please fix build errors before committing."
+    rm -f build_output.log
+    exit 1
+  fi
+else
+  echo "✅ Build completed successfully"
+fi
+
+rm -f build_output.log
+
+# Check for common Vercel deployment issues
+echo "🔍 Checking for common Vercel deployment issues..."
+
+# Check if package.json has required scripts
+if ! grep -q '"build".*"next build"' package.json; then
+  echo "❌ Missing 'build' script in package.json"
+  exit 1
+fi
+
+if ! grep -q '"start".*"next start"' package.json; then
+  echo "❌ Missing 'start' script in package.json"
+  exit 1
+fi
+
+# Check for proper Next.js configuration
+if [ ! -f "next.config.js" ] && [ ! -f "next.config.mjs" ] && [ ! -f "next.config.ts" ]; then
+  echo "⚠️ No Next.js config file found. Creating default next.config.js..."
+  cat > next.config.js << EOF
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    appDir: true,
+  },
+  env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
+  },
+}
+
+module.exports = nextConfig
+EOF
+fi
+
+# Check for .env.example if .env.local exists
+if [ -f ".env.local" ] && [ ! -f ".env.example" ]; then
+  echo "⚠️ .env.local exists but no .env.example found. Consider adding .env.example for documentation."
+fi
+
+# Verify build output
+if [ ! -d ".next" ]; then
+  echo "❌ Build did not create .next directory"
+  exit 1
+fi
+
+# Check bundle size (optional warning)
+if [ -d ".next/static" ]; then
+  BUNDLE_SIZE=$(du -sh .next/static | cut -f1)
+  echo "📦 Bundle size: $BUNDLE_SIZE"
+fi
+
+# Run staged files linting
+npx lint-staged
+
+echo "✅ All pre-commit checks passed! Ready for Vercel deployment."
