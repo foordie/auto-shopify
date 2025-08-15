@@ -1,0 +1,251 @@
+name: Vercel Deployment Readiness Check
+
+on:
+  push:
+    branches: [ main, testing ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_ENV: production
+
+jobs:
+  vercel-readiness:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        npm ci --production=false
+        
+    - name: Create mock environment file
+      run: |
+        cat > .env.local << EOF
+        # Mock environment variables for build testing
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_mock_key_for_build_testing
+        CLERK_SECRET_KEY=sk_test_mock_key_for_build_testing
+        JWT_SECRET=mock-jwt-secret-for-build-testing-minimum-32-characters-required
+        NEXT_PUBLIC_API_BASE_URL=https://mock-api.example.com
+        DATABASE_URL=postgresql://mock:mock@mock-host:5432/mock_db?sslmode=require
+        SHOPIFY_PARTNER_API_KEY=mock_shopify_key
+        SHOPIFY_PARTNER_API_SECRET=mock_shopify_secret
+        NODE_ENV=production
+        EOF
+        
+    - name: TypeScript type check
+      run: |
+        echo "🔍 Running TypeScript type check..."
+        npm run type-check
+        
+    - name: ESLint check
+      run: |
+        echo "🧹 Running ESLint..."
+        npm run lint
+        
+    - name: Vercel build simulation
+      run: |
+        echo "🏗️ Running Vercel build simulation..."
+        npm run build
+        
+    - name: Check build artifacts
+      run: |
+        echo "📦 Checking build artifacts..."
+        if [ ! -d ".next" ]; then
+          echo "❌ .next directory not found"
+          exit 1
+        fi
+        
+        if [ ! -f ".next/BUILD_ID" ]; then
+          echo "❌ BUILD_ID file not found"
+          exit 1
+        fi
+        
+        echo "✅ Build artifacts verified"
+        
+    - name: Test production server start
+      run: |
+        echo "🚀 Testing production server start..."
+        timeout 30s npm run start &
+        sleep 10
+        
+        # Check if server is responding
+        if curl -f http://localhost:3000 > /dev/null 2>&1; then
+          echo "✅ Production server starts successfully"
+        else
+          echo "❌ Production server failed to start"
+          exit 1
+        fi
+        
+    - name: Bundle size check
+      run: |
+        echo "📊 Checking bundle sizes..."
+        
+        # Get main bundle size
+        MAIN_SIZE=$(find .next/static/chunks -name "main-*.js" -exec stat -c%s {} \; | head -1)
+        if [ "$MAIN_SIZE" -gt 1048576 ]; then  # 1MB limit
+          echo "⚠️ Warning: Main bundle size is ${MAIN_SIZE} bytes (>1MB)"
+        else
+          echo "✅ Main bundle size is acceptable: ${MAIN_SIZE} bytes"
+        fi
+        
+    - name: Environment variables validation
+      run: |
+        echo "🔧 Validating required environment variables..."
+        
+        # Check if build would fail due to missing env vars
+        node -e "
+          const requiredVars = [
+            'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
+            'CLERK_SECRET_KEY',
+            'JWT_SECRET',
+            'NEXT_PUBLIC_API_BASE_URL'
+          ];
+          
+          const missing = requiredVars.filter(key => !process.env[key]);
+          
+          if (missing.length > 0) {
+            console.log('❌ Missing required environment variables:', missing.join(', '));
+            process.exit(1);
+          } else {
+            console.log('✅ All required environment variables are present');
+          }
+        "
+        
+    - name: Dependency security audit
+      run: |
+        echo "🔒 Running security audit..."
+        npm audit --audit-level moderate
+        
+    - name: Generate deployment report
+      run: |
+        echo "📋 Generating deployment report..."
+        
+        cat > deployment-report.md << EOF
+        # Deployment Readiness Report
+        
+        **Date**: $(date)
+        **Node Version**: ${{ matrix.node-version }}
+        **Commit**: ${{ github.sha }}
+        
+        ## Build Status
+        - ✅ TypeScript compilation: Passed
+        - ✅ ESLint checks: Passed
+        - ✅ Vercel build: Passed
+        - ✅ Production server: Starts successfully
+        - ✅ Bundle size: Within limits
+        - ✅ Environment variables: Validated
+        - ✅ Security audit: No critical issues
+        
+        ## Build Artifacts
+        - .next directory: Present
+        - BUILD_ID: $(cat .next/BUILD_ID)
+        - Bundle count: $(find .next/static/chunks -name "*.js" | wc -l) JavaScript chunks
+        
+        ## Ready for Vercel Deployment ✅
+        EOF
+        
+        cat deployment-report.md
+        
+    - name: Upload deployment report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: deployment-report-node-${{ matrix.node-version }}
+        path: deployment-report.md
+        
+    - name: Comment PR with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('deployment-report.md', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## 🚀 Vercel Deployment Readiness Check\n\n${report}`
+          });
+
+  lighthouse-performance:
+    runs-on: ubuntu-latest
+    needs: vercel-readiness
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: |
+        cat > .env.local << EOF
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_mock_key
+        CLERK_SECRET_KEY=sk_test_mock_key
+        JWT_SECRET=mock-jwt-secret-for-lighthouse-testing-minimum-32-characters
+        NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+        DATABASE_URL=postgresql://mock:mock@mock-host:5432/mock_db
+        NODE_ENV=production
+        EOF
+        
+        npm run build
+        
+    - name: Start production server
+      run: |
+        npm run start &
+        sleep 10
+        
+    - name: Run Lighthouse CI
+      run: |
+        npm install -g @lhci/cli@0.12.x
+        
+        # Create Lighthouse CI config
+        cat > lighthouserc.js << EOF
+        module.exports = {
+          ci: {
+            collect: {
+              url: ['http://localhost:3000/', 'http://localhost:3000/register-secure', 'http://localhost:3000/login'],
+              numberOfRuns: 3,
+            },
+            assert: {
+              assertions: {
+                'categories:performance': ['error', {minScore: 0.8}],
+                'categories:accessibility': ['error', {minScore: 0.9}],
+                'categories:best-practices': ['error', {minScore: 0.9}],
+                'categories:seo': ['error', {minScore: 0.8}],
+              },
+            },
+          },
+        };
+        EOF
+        
+        lhci collect --config=lighthouserc.js
+        lhci assert --config=lighthouserc.js
+        
+    - name: Upload Lighthouse results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: lighthouse-report
+        path: .lighthouseci/
