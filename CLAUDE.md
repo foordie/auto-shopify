@@ -16,20 +16,29 @@ npm run type-check
 npm run lint
 ```
 
-The project runs on Next.js 14.2.0 with TypeScript and uses `npm run dev` for development server on port 3000.
+The project runs on Next.js 14.2.25 with TypeScript and uses `npm run dev` for development server on port 3000.
 
 ## Architecture Overview
 
 ### Platform Purpose
 This is a **Shopify Automation Platform** that has evolved from an agency-focused B2B model to a **consumer-focused B2C platform** for individual entrepreneurs, store builders, and wannabe startups. The platform automates Shopify store creation and provides mobile API integration for the VibeCode app.
 
-### Dual Authentication Systems
-The codebase implements **two parallel authentication systems**:
+### Authentication Architecture (In Transition)
+The codebase is currently migrating authentication systems:
 
-1. **Supabase Auth** (Legacy): Found in `/src/lib/auth/auth-provider.tsx` and some API routes
-2. **Custom JWT Auth** (Current): Implemented in `/src/lib/auth/jwt-middleware.ts` and newer API routes
+1. **Custom JWT Auth** (Current): Implemented in `/src/lib/auth/jwt-middleware.ts` and API routes
+   - bcrypt password hashing with 12 salt rounds
+   - JWT tokens with 15-minute expiration
+   - Refresh token rotation for security
+   - Rate limiting per endpoint (5-20 requests/15min)
 
-**Key Decision**: The platform is transitioning from Supabase to **Neon + Vercel** for better control and automation integration. New endpoints use JWT authentication, while some legacy routes still use Supabase.
+2. **Clerk Authentication** (Target): Modern auth service integration
+   - ✅ Package installed (`@clerk/nextjs`)
+   - ✅ ClerkProvider added to layout.tsx
+   - ✅ Test page created at `/clerk-test`
+   - ⏳ Awaiting API keys for full integration
+
+**Migration Status**: Ready to switch from custom JWT to Clerk once API keys are configured. This will provide Google OAuth, 2FA, and enterprise-grade security out of the box.
 
 ### Security-First API Design
 All API endpoints in `/src/app/api/` implement enterprise-grade security:
@@ -116,14 +125,22 @@ All form validation uses Zod schemas in `/src/lib/validation/auth.ts`:
 ## Environment Variables
 
 ```bash
-# JWT Authentication
+# Clerk Authentication (Primary)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
+CLERK_SECRET_KEY=sk_test_your_secret_key_here
+
+# JWT Authentication (Legacy - being phased out)
 JWT_SECRET=your-super-secure-jwt-secret-here
 
-# Database (Neon PostgreSQL recommended)  
+# Database (Neon PostgreSQL)  
 DATABASE_URL=postgresql://user:password@neon-db-url/database
 
 # API Base URL
 NEXT_PUBLIC_API_BASE_URL=https://your-app.vercel.app
+
+# Shopify Partner API (for production)
+SHOPIFY_PARTNER_API_KEY=your-shopify-partner-api-key
+SHOPIFY_PARTNER_API_SECRET=your-shopify-partner-api-secret
 ```
 
 ## Security Considerations
@@ -174,3 +191,23 @@ The platform integrates with:
 - `/src/app/*/page.tsx` - Page components using App Router
 
 The platform follows Next.js 14 App Router conventions with TypeScript strict mode enabled.
+
+## Current Development Status
+
+### ✅ Completed Infrastructure
+- **Authentication**: Custom JWT system + Clerk integration started
+- **Database**: Neon PostgreSQL schema ready (7 tables)
+- **Frontend**: Mobile-first React components with Tailwind CSS
+- **API**: Secure RESTful endpoints with rate limiting
+- **Deployment**: Vercel-optimized with environment variables configured
+
+### 🔄 In Progress
+- **Clerk Migration**: Package installed, awaiting API keys
+- **Database Connection**: Schema ready, needs production setup
+
+### ❌ Pending
+- **Real Data**: Replace demo data with database integration
+- **Shopify API**: Partner account setup and store creation
+- **Testing**: End-to-end user flow validation
+
+Visit `/clerk-test` once Clerk API keys are configured to test authentication flow.
