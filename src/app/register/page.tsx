@@ -1,34 +1,39 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useAuth } from '@/lib/auth/auth-provider-mock'
-import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react'
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/lib/auth/auth-context';
+import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
 
 export default function RegisterPage() {
-  const [mounted, setMounted] = useState(false)
+  const [mounted, setMounted] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
     fullName: '',
     businessName: '',
-    role: 'aspiring_entrepreneur' as 'first_time_builder' | 'aspiring_entrepreneur' | 'small_business_owner' | 'side_hustle_starter' | 'creative_professional',
+    role: 'aspiring_entrepreneur' as
+      | 'first_time_builder'
+      | 'aspiring_entrepreneur'
+      | 'small_business_owner'
+      | 'side_hustle_starter'
+      | 'creative_professional',
     productCategory: '',
-    businessStage: ''
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
-  
+    businessStage: '',
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
   // Handle client-side mounting
   useEffect(() => {
-    setMounted(true)
-  }, [])
-  
+    setMounted(true);
+  }, []);
+
   // Use auth hook - will throw error during build but that's expected
-  const { signUp, loading } = useAuth()
+  const { register, loading } = useAuth();
 
   // Don't render until client-side mounted
   if (!mounted) {
@@ -36,61 +41,70 @@ export default function RegisterPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
-    )
+    );
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
-    })
-  }
+      [e.target.name]: e.target.value,
+    });
+  };
 
   const validateForm = () => {
-    if (!formData.email || !formData.password || !formData.confirmPassword || !formData.fullName || !formData.productCategory || !formData.businessStage) {
-      return 'Please fill in all required fields'
+    if (
+      !formData.email ||
+      !formData.password ||
+      !formData.confirmPassword ||
+      !formData.fullName ||
+      !formData.productCategory ||
+      !formData.businessStage
+    ) {
+      return 'Please fill in all required fields';
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
-      return 'Passwords do not match'
+      return 'Passwords do not match';
     }
-    
+
     if (formData.password.length < 6) {
-      return 'Password must be at least 6 characters'
+      return 'Password must be at least 6 characters';
     }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      return 'Please enter a valid email address'
+      return 'Please enter a valid email address';
     }
-    
-    return null
-  }
+
+    return null;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    
-    const validationError = validateForm()
+    e.preventDefault();
+    setError('');
+
+    const validationError = validateForm();
     if (validationError) {
-      setError(validationError)
-      return
+      setError(validationError);
+      return;
     }
-    
-    const result = await signUp(formData.email, formData.password, {
+
+    const result = await register({
+      email: formData.email,
+      password: formData.password,
       fullName: formData.fullName,
       businessName: formData.businessName,
       role: formData.role,
       productCategory: formData.productCategory,
-      businessStage: formData.businessStage
-    })
-    
+      businessStage: formData.businessStage,
+    });
+
     if (result.success) {
-      setSuccess(true)
+      setSuccess(true);
     } else if (result.error) {
-      setError(result.error)
+      setError(result.error);
     }
-  }
+  };
 
   if (success) {
     return (
@@ -100,25 +114,22 @@ export default function RegisterPage() {
             <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Welcome to the Platform!</h2>
             <p className="text-gray-600 mb-6">
-              Your account has been created successfully. You're now being redirected to the dashboard.
+              Your account has been created successfully. You're now being redirected to the
+              dashboard.
             </p>
             <div className="animate-spin h-6 w-6 border-2 border-primary-500 border-t-transparent rounded-full mx-auto"></div>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Start automating your Shopify store creation
-          </p>
+          <h2 className="text-3xl font-extrabold text-gray-900">Create your account</h2>
+          <p className="mt-2 text-sm text-gray-600">Start automating your Shopify store creation</p>
         </div>
       </div>
 
@@ -130,7 +141,7 @@ export default function RegisterPage() {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
                 Full Name *
@@ -261,7 +272,9 @@ export default function RegisterPage() {
                   <option value="aspiring_entrepreneur">Aspiring entrepreneur</option>
                   <option value="small_business_owner">Small business owner going online</option>
                   <option value="side_hustle_starter">Side hustle starter</option>
-                  <option value="creative_professional">Creative professional selling products</option>
+                  <option value="creative_professional">
+                    Creative professional selling products
+                  </option>
                 </select>
               </div>
             </div>
@@ -365,5 +378,5 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
